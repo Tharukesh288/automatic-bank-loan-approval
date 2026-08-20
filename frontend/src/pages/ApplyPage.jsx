@@ -94,9 +94,9 @@ export function ApplyPage() {
                 {label: 'No', value: 'No'}, {label: 'Yes', value: 'Yes'}
               ]} />
               
-              <Input label="Applicant Income" type="number" name="applicant_income" required value={formData.applicant_income} onChange={handleChange} />
-              <Input label="Coapplicant Income" type="number" name="coapplicant_income" required value={formData.coapplicant_income} onChange={handleChange} />
-              <Input label="Loan Amount" type="number" name="loan_amount" required value={formData.loan_amount} onChange={handleChange} />
+              <Input label="Applicant Income (₹)" type="number" name="applicant_income" required value={formData.applicant_income} onChange={handleChange} placeholder="e.g. 5000" />
+              <Input label="Coapplicant Income (₹)" type="number" name="coapplicant_income" required value={formData.coapplicant_income} onChange={handleChange} placeholder="e.g. 1500" />
+              <Input label="Loan Amount (in ₹ Thousands)" type="number" name="loan_amount" required value={formData.loan_amount} onChange={handleChange} placeholder="e.g. 200" />
               <Input label="Loan Amount Term (days)" type="number" name="loan_amount_term" required value={formData.loan_amount_term} onChange={handleChange} />
               
               <Select label="Credit History" name="credit_history" required value={formData.credit_history} onChange={handleChange} options={[

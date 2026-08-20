@@ -65,8 +65,22 @@ def get_application(application_id: str, db: Session = Depends(get_db)):
     return ApplicationResponse(
         application_id=application.application_id,
         applicant_name=application.applicant_name,
+        email=application.email,
+        phone=application.phone,
+        pan=application.pan,
+        dependents=application.dependents,
+        education=application.education,
+        self_employed=application.self_employed,
+        applicant_income=application.applicant_income,
+        coapplicant_income=application.coapplicant_income,
+        loan_amount=application.loan_amount,
+        loan_amount_term=application.loan_amount_term,
+        credit_history=application.credit_history,
+        property_area=application.property_area,
+        prediction=application.prediction,
         approval_probability=application.approval_probability,
         recommendation=application.recommendation,
         risk_level=application.risk_level,
+        message=application.message,
         status=application.status
     )

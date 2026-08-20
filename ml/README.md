@@ -1,124 +1,168 @@
-# ML Module — Automatic Bank Loan Approval System
+# Machine Learning Subsystem — Automatic Bank Loan Approval
 
-This directory contains the machine-learning pipeline for predicting loan approval using supervised classification algorithms.
+This directory contains the machine learning pipeline, dataset preprocessing, model evaluation scripts, and serialized artifacts for the **Automatic Bank Loan Approval & Decision Support System**.
 
 ---
 
-## 1. Directory Structure
+## 1. Overview & Technology Stack
+
+The ML subsystem uses **supervised binary classification** to evaluate bank loan applications, predict credit risk, calculate an approval probability score, and output AI-assisted decision recommendations for human loan managers.
+
+### Technology Stack
+- **Language**: Python 3.12
+- **Core ML Library**: `scikit-learn` (Logistic Regression, Random Forest, Decision Tree, ColumnTransformer, Pipelines)
+- **Data Manipulation**: `pandas`, `numpy`
+- **Model Serialization**: `joblib`
+- **Environment**: Virtual Environment (`venv`) / Jupyter Notebook (`notebooks/eda_and_train.ipynb`)
+
+---
+
+## 2. Supervised Learning & Problem Formulation
+
+### Where Supervised Learning is Used
+Supervised machine learning is used to learn a predictive mapping function $f(X) \to Y$ from historical labeled bank loan application data (`ml/data/Loan_Data.csv`).
+
+- **Historical Dataset**: 614 rows of loan application records with known historical outcomes (`Loan_Status`).
+- **Target Variable ($Y$)**: `Loan_Status`
+  - `Y` (Approved) $\to$ Class `1`
+  - `N` (Not Approved) $\to$ Class `0`
+- **Input Features ($X$)**: 9 curated applicant profile & financial attributes:
+  1. `applicant_income` (`ApplicantIncome`) — Numerical
+  2. `coapplicant_income` (`CoapplicantIncome`) — Numerical
+  3. `loan_amount` (`LoanAmount`) — Numerical (in ₹ Thousands)
+  4. `loan_amount_term` (`Loan_Amount_Term`) — Numerical (in Days/Months)
+  5. `credit_history` (`Credit_History`) — Discrete (`"1"` = Good, `"0"` = Bad/None)
+  6. `dependents` (`Dependents`) — Categorical (`"0"`, `"1"`, `"2"`, `"3+"`)
+  7. `education` (`Education`) — Categorical (`"Graduate"`, `"Not Graduate"`)
+  8. `self_employed` (`Self_Employed`) — Categorical (`"Yes"`, `"No"`)
+  9. `property_area` (`Property_Area`) — Categorical (`"Urban"`, `"Semiurban"`, `"Rural"`)
+
+> **Fairness & Privacy Guarantee**: Personal identity attributes (`applicant_name`, `email`, `phone`, `pan`) and `Loan_ID` are **excluded** from the ML model input features to eliminate algorithmic bias and ensure data protection compliance.
+
+---
+
+## 3. Preprocessing & Feature Transformation
+
+Raw application data undergoes structured preprocessing using a scikit-learn `ColumnTransformer` to handle missing values and feature scaling without data leakage:
+
+```text
+                      ┌──────────────────────┐
+                      │ Raw Input Dictionary │
+                      └──────────┬───────────┘
+                                 │
+                   ┌─────────────┴─────────────┐
+                   ▼                           ▼
+        ┌─────────────────────┐     ┌─────────────────────┐
+        │ Numerical Features  │     │Categorical Features │
+        └──────────┬──────────┘     └──────────┬──────────┘
+                   │                           │
+                   ▼                           ▼
+        ┌─────────────────────┐     ┌─────────────────────┐
+        │ SimpleImputer       │     │ SimpleImputer       │
+        │ (strategy='median') │     │(strategy='most_freq')│
+        └──────────┬──────────┘     └──────────┬──────────┘
+                   │                           │
+                   ▼                           ▼
+        ┌─────────────────────┐     ┌─────────────────────┐
+        │ StandardScaler      │     │ OneHotEncoder       │
+        │ (z = (x - μ) / σ)   │     │ (handle_unknown)    │
+        └──────────┬──────────┘     └──────────┬──────────┘
+                   │                           │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+                     ┌───────────────────────┐
+                     │ Preprocessed Array X  │
+                     └───────────────────────┘
+```
+
+### Numerical Scaling ($z$-score normalization)
+Standard scaling standardizes numerical values using:
+$$z = \frac{x - \mu}{\sigma}$$
+Where $\mu$ is the feature mean and $\sigma$ is the standard deviation learned from the training set. This makes numerical features unit-agnostic (functioning identically for raw numeric values regardless of currency units).
+
+---
+
+## 4. How ML Calculates Approval Percentage & Recommendations
+
+The ML pipeline calculates the final approval percentage and decision recommendation in **3 distinct steps**:
+
+```text
+ ┌─────────────────┐       ┌──────────────────────┐       ┌────────────────────────┐
+ │ Model Inference │  ───> │ Approval Percentage  │  ───> │ Decision-Support Band  │
+ │ (predict_proba) │       │ P(Approved) * 100%   │       │ Recommendation & Risk  │
+ └─────────────────┘       └──────────────────────┘       └────────────────────────┘
+```
+
+### Step 1: Probabilistic Prediction (`predict_proba`)
+Instead of outputting a rigid binary 0/1 decision, the trained Logistic Regression model calculates the posterior probability of loan approval given feature vector $X$:
+$$P(Y = 1 \mid X) = \frac{1}{1 + e^{-(\beta_0 + \mathbf{\beta}^T X)}}$$
+
+### Step 2: Conversion to Approval Percentage
+The backend converts the raw probability float score $P(Y=1 \mid X) \in [0.0, 1.0]$ into a human-readable percentage:
+$$\text{Approval Percentage} = P(Y = 1 \mid X) \times 100\%$$
+*Example*: A probability score of `0.852` $\to$ **`85.2% Approval Probability`**.
+
+### Step 3: Decision-Support Recommendation Thresholding
+To assist loan managers without overriding human authority, the approval percentage maps to decision-support recommendation bands:
+
+| Approval Probability ($P$) | Recommendation Text | Risk Level | Description |
+| :--- | :--- | :--- | :--- |
+| **$\ge 75\%$** (`0.75 - 1.00`) | `STRONG CANDIDATE` | `LOW` | High credit confidence; recommended for quick approval. |
+| **$50\% - 74\%$** (`0.50 - 0.74`) | `MANUAL REVIEW` | `MEDIUM` | Moderate confidence; requires human manager verification. |
+| **$< 50\%$** (`0.00 - 0.49`) | `HIGHER RISK` | `HIGH` | Elevated credit risk score; detailed scrutiny advised. |
+
+---
+
+## 5. Model Benchmarks & Selection Rationale
+
+Three supervised algorithms were trained and evaluated on a stratified 20% test split (123 test applications) with `random_state=42`:
+
+| Model Algorithm | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Logistic Regression** | **86.18%** | **84.00%** | **98.82%** | **0.9081** | **0.8474** |
+| **Random Forest Classifier** | 84.55% | 82.35% | 98.82% | 0.8984 | 0.8121 |
+| **Decision Tree Classifier** | 82.11% | 82.47% | 94.12% | 0.8791 | 0.7259 |
+
+### Why Logistic Regression Was Selected
+1. **Highest ROC-AUC (0.8474) & Accuracy (86.18%)**: Superior discrimination capability between eligible and high-risk applicants.
+2. **Exceptional Recall (98.82%)**: Minimizes false rejections, ensuring qualified applicants are not incorrectly flagged as high risk.
+3. **Calibrated Probabilities**: Provides smooth, continuous probability estimates ideal for percentage calculation.
+4. **Interpretability & Resilience**: Avoids overfitting on medium-sized banking tabular datasets.
+
+---
+
+## 6. Directory Layout & Artifacts
 
 ```text
 ml/
 ├── data/
-│   └── Loan_Data.csv          # Raw labeled dataset (614 rows, 13 columns)
-├── notebooks/
-│   └── eda_and_train.ipynb    # Jupyter Notebook for EDA & model experimentation
-├── src/
-│   ├── preprocess.py          # ColumnTransformer & backend feature mapping logic
-│   ├── train.py               # Model training, evaluation & artifact serialization
-│   ├── evaluate.py            # Evaluation metrics & summary table generator
-│   └── predict.py             # Prediction interface utility for backend consumption
+│   └── Loan_Data.csv          # Training dataset (614 records)
 ├── models/
-│   └── loan_model.pkl         # Serialized complete scikit-learn Pipeline (Preprocessing + Model)
-├── ML_TASK.md                 # Scope and guidelines for ML task
-└── README.md                  # Comprehensive ML documentation
+│   └── loan_model.pkl         # Serialized scikit-learn Pipeline (Preprocessor + Classifier)
+├── notebooks/
+│   └── eda_and_train.ipynb    # Exploratory Data Analysis & experiments
+├── src/
+│   ├── preprocess.py          # ColumnTransformer & feature mapping dictionary
+│   ├── train.py               # Training execution & joblib serialization
+│   ├── evaluate.py            # Model evaluation metrics generator
+│   └── predict.py             # Backend inference interface helper
+├── ML_TASK.md                 # Technical specification
+└── README.md                  # Comprehensive subsystem documentation
 ```
 
 ---
 
-## 2. ML Feature Contract & Target Mapping
+## 7. How to Execute & Re-train
 
-### Target Variable
-- **`Loan_Status`**:
-  - `Y` (Approved) → `1`
-  - `N` (Not Approved) → `0`
-
-### Input Features (9 MVP Features)
-1. `ApplicantIncome` (`applicant_income`) — Numerical
-2. `CoapplicantIncome` (`coapplicant_income`) — Numerical
-3. `LoanAmount` (`loan_amount`) — Numerical
-4. `Loan_Amount_Term` (`loan_amount_term`) — Numerical
-5. `Credit_History` (`credit_history`) — Categorical/Discrete (`"0"`, `"1"`)
-6. `Dependents` (`dependents`) — Categorical (`"0"`, `"1"`, `"2"`, `"3+"`)
-7. `Education` (`education`) — Categorical (`"Graduate"`, `"Not Graduate"`)
-8. `Self_Employed` (`self_employed`) — Categorical (`"Yes"`, `"No"`)
-9. `Property_Area` (`property_area`) — Categorical (`"Urban"`, `"Semiurban"`, `"Rural"`)
-
-> **Excluded Fields:** `Loan_ID` (Identifier), `Gender`, `Married`, and personal identifiers (`Name`, `Email`, `Phone`, `PAN`).
-
----
-
-## 3. Preprocessing & Data Leakage Prevention
-
-- **Numerical Pipeline:** `SimpleImputer(strategy='median')` → `StandardScaler()`
-- **Categorical Pipeline:** `SimpleImputer(strategy='most_frequent')` → `OneHotEncoder(handle_unknown='ignore', sparse_output=False)`
-- Combined into a single `ColumnTransformer`.
-- **Preventing Data Leakage:** Preprocessing statistics (mean, std, median, one-hot categories) are learned **strictly from the training set** after a stratified 80/20 train/test split.
-
----
-
-## 4. Supervised Model Benchmark Results
-
-All models were evaluated on the test set (123 samples) with `random_state=42`:
-
-| Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Logistic Regression** | **0.8618** | **0.8400** | **0.9882** | **0.9081** | **0.8474** |
-| **Random Forest** | 0.8455 | 0.8235 | 0.9882 | 0.8984 | 0.8121 |
-| **Decision Tree** | 0.8211 | 0.8247 | 0.9412 | 0.8791 | 0.7259 |
-
-### Selection Rationale
-**Logistic Regression** was selected as the final production model because:
-1. It achieved the highest **ROC-AUC (0.8474)** and **Accuracy (86.18%)**.
-2. It achieved an outstanding **Recall of 98.82%**, minimizing false rejections of eligible applicants.
-3. It provides well-calibrated class probabilities (`predict_proba`) suitable for decision-support thresholding.
-4. It is lightweight, fast, interpretable, and immune to overfitting on small datasets.
-
----
-
-## 5. Artifact Serialization
-
-The complete pipeline (Preprocessing + Selected Logistic Regression classifier) is serialized as **a single joblib artifact**:
-
-```text
-/ml/models/loan_model.pkl
+### Run Prediction Inference Utility
+```bash
+python ml/src/predict.py
 ```
 
----
-
-## 6. How Backend Consumes the Model
-
-The backend prediction service can import `predict_loan` from `ml.src.predict`:
-
-```python
-from ml.src.predict import predict_loan
-
-# Payload matching FastAPI request schema
-input_payload = {
-    "dependents": "1",
-    "education": "Graduate",
-    "self_employed": "No",
-    "applicant_income": 5000.0,
-    "coapplicant_income": 1500.0,
-    "loan_amount": 200.0,
-    "loan_amount_term": 360.0,
-    "credit_history": 1.0,
-    "property_area": "Urban"
-}
-
-result = predict_loan(input_payload)
-# Result schema:
-# {
-#     "prediction": "approved",
-#     "approval_probability": 0.7198
-# }
-```
-
----
-
-## 7. How to Re-train the Model
-
-To execute the training pipeline and update the saved artifact:
-
+### Re-train and Serialize Production Pipeline
+To re-fit the preprocessing transformer and model on updated data:
 ```bash
 python ml/src/train.py
 ```
+This updates the serialized artifact at `ml/models/loan_model.pkl`.

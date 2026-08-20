@@ -5,6 +5,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Button } from '../components/Button';
 import { Card, CardBody } from '../components/Card';
 import { Header } from '../components/Header';
+import { ApplicationDetailsSheet } from '../components/ApplicationDetailsSheet';
 
 const FILTERS = [
   { label: 'Pending', value: 'AI_ASSESSED' },
@@ -19,6 +20,7 @@ export function ManagerPage() {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [activeFilter, setActiveFilter] = useState('AI_ASSESSED');
+  const [viewingApp, setViewingApp] = useState(null);
   
   const fetchApps = (statusFilter = activeFilter) => {
     setLoading(true);
@@ -101,6 +103,7 @@ export function ManagerPage() {
                   <TableCell isHeader>Recommendation</TableCell>
                   <TableCell isHeader>Risk</TableCell>
                   <TableCell isHeader>Status</TableCell>
+                  <TableCell isHeader style={{ textAlign: 'right' }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -119,11 +122,23 @@ export function ManagerPage() {
                     <TableCell><StatusBadge status={app.recommendation} type="recommendation" /></TableCell>
                     <TableCell><StatusBadge status={app.risk_level} type="risk" /></TableCell>
                     <TableCell><StatusBadge status={app.status} type="status" /></TableCell>
+                    <TableCell style={{ textAlign: 'right' }}>
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingApp(app);
+                        }}
+                      >
+                        See Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {applications.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center" style={{ padding: '2rem' }}>No applications found.</TableCell>
+                    <TableCell colSpan={8} className="text-center" style={{ padding: '2rem' }}>No applications found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -132,6 +147,13 @@ export function ManagerPage() {
         </CardBody>
       </Card>
       </div>
+
+      {viewingApp && (
+        <ApplicationDetailsSheet 
+          application={viewingApp} 
+          onClose={() => setViewingApp(null)} 
+        />
+      )}
     </div>
   );
 }

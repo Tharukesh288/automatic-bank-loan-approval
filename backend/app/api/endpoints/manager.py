@@ -32,9 +32,23 @@ def list_applications(
             ApplicationResponse(
                 application_id=app.application_id,
                 applicant_name=app.applicant_name,
+                email=app.email,
+                phone=app.phone,
+                pan=app.pan,
+                dependents=app.dependents,
+                education=app.education,
+                self_employed=app.self_employed,
+                applicant_income=app.applicant_income,
+                coapplicant_income=app.coapplicant_income,
+                loan_amount=app.loan_amount,
+                loan_amount_term=app.loan_amount_term,
+                credit_history=app.credit_history,
+                property_area=app.property_area,
+                prediction=app.prediction,
                 approval_probability=app.approval_probability,
                 recommendation=app.recommendation,
                 risk_level=app.risk_level,
+                message=app.message,
                 status=app.status
             )
             for app in applications

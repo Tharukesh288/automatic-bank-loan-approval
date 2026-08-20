@@ -29,9 +29,25 @@ class LoanPredictionResponse(BaseModel):
 class ApplicationResponse(BaseModel):
     application_id: str
     applicant_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    pan: Optional[str] = None
+    
+    dependents: Optional[str] = None
+    education: Optional[str] = None
+    self_employed: Optional[str] = None
+    applicant_income: Optional[float] = None
+    coapplicant_income: Optional[float] = None
+    loan_amount: Optional[float] = None
+    loan_amount_term: Optional[float] = None
+    credit_history: Optional[float] = None
+    property_area: Optional[str] = None
+    
+    prediction: Optional[str] = None
     approval_probability: float
     recommendation: str
     risk_level: str
+    message: Optional[str] = None
     status: str
 
 class ApplicationListResponse(BaseModel):
