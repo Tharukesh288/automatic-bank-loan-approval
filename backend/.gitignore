@@ -1,0 +1,22 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.venv/
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+loan_app.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Test cache
+.pytest_cache/
