@@ -6,22 +6,31 @@ import { Button } from '../components/Button';
 import { Card, CardBody } from '../components/Card';
 import { Header } from '../components/Header';
 
+const FILTERS = [
+  { label: 'Pending', value: 'AI_ASSESSED' },
+  { label: 'Under Review', value: 'UNDER_REVIEW' },
+  { label: 'Shortlisted', value: 'SHORTLISTED' },
+  { label: 'Rejected', value: 'REJECTED' },
+  { label: 'All', value: '' },
+];
+
 export function ManagerPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [activeFilter, setActiveFilter] = useState('AI_ASSESSED');
   
-  const fetchApps = () => {
+  const fetchApps = (statusFilter = activeFilter) => {
     setLoading(true);
-    getManagerApplications()
+    getManagerApplications(statusFilter)
       .then(data => setApplications(data.applications || []))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchApps();
-  }, []);
+    fetchApps(activeFilter);
+  }, [activeFilter]);
 
   const handleSelect = (id) => {
     const newSet = new Set(selectedIds);
@@ -30,12 +39,17 @@ export function ManagerPage() {
     setSelectedIds(newSet);
   };
 
+  const handleFilterChange = (filterValue) => {
+    setSelectedIds(new Set());
+    setActiveFilter(filterValue);
+  };
+
   const handleBulkAction = async (action) => {
     if (selectedIds.size === 0) return;
     try {
       await bulkUpdateApplications(Array.from(selectedIds), action);
       setSelectedIds(new Set());
-      fetchApps();
+      fetchApps(activeFilter);
     } catch (err) {
       alert(err.message);
     }
@@ -46,16 +60,31 @@ export function ManagerPage() {
       <Header />
       <div className="container" style={{ padding: '2rem 0' }}>
         <div className="flex justify-between items-center mb-4">
-        <h2>Manager Dashboard</h2>
-        <div>
-          <span style={{ marginRight: '1rem', color: 'var(--color-text-muted)' }}>
-            {selectedIds.size} selected
-          </span>
-          <Button variant="secondary" size="sm" onClick={() => handleBulkAction('REVIEW')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Review</Button>
-          <Button variant="danger" size="sm" onClick={() => handleBulkAction('REJECT')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Reject</Button>
-          <Button variant="success" size="sm" onClick={() => handleBulkAction('SHORTLIST')} disabled={selectedIds.size === 0}>Shortlist</Button>
+          <h2>Manager Dashboard</h2>
         </div>
-      </div>
+
+        <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="flex" style={{ gap: '0.5rem' }}>
+            {FILTERS.map(filter => (
+              <Button
+                key={filter.value}
+                variant={activeFilter === filter.value ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => handleFilterChange(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+          <div>
+            <span style={{ marginRight: '1rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+              {selectedIds.size} selected
+            </span>
+            <Button variant="secondary" size="sm" onClick={() => handleBulkAction('REVIEW')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Review</Button>
+            <Button variant="danger" size="sm" onClick={() => handleBulkAction('REJECT')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Reject</Button>
+            <Button variant="success" size="sm" onClick={() => handleBulkAction('SHORTLIST')} disabled={selectedIds.size === 0}>Shortlist</Button>
+          </div>
+        </div>
       
       <Card>
         <CardBody style={{ padding: 0 }}>

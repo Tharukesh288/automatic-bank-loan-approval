@@ -93,8 +93,14 @@ async function handleMockRequest(url, options) {
   }
 
   if (url.startsWith('/manager/applications') && (options.method === undefined || options.method === 'GET')) {
+    const urlObj = new URL(url, 'http://localhost');
+    const statusParam = urlObj.searchParams.get('status');
+    let apps = Array.from(mockDatabase.values());
+    if (statusParam) {
+      apps = apps.filter(app => app.status === statusParam);
+    }
     return {
-      applications: Array.from(mockDatabase.values())
+      applications: apps
     };
   }
   
