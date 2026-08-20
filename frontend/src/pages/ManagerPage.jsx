@@ -53,7 +53,7 @@ export function ManagerPage() {
           </span>
           <Button variant="secondary" size="sm" onClick={() => handleBulkAction('REVIEW')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Review</Button>
           <Button variant="danger" size="sm" onClick={() => handleBulkAction('REJECT')} disabled={selectedIds.size === 0} style={{ marginRight: '0.5rem' }}>Reject</Button>
-          <Button variant="primary" size="sm" onClick={() => handleBulkAction('SHORTLIST')} disabled={selectedIds.size === 0}>Shortlist</Button>
+          <Button variant="success" size="sm" onClick={() => handleBulkAction('SHORTLIST')} disabled={selectedIds.size === 0}>Shortlist</Button>
         </div>
       </div>
       

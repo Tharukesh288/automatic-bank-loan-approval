@@ -18,6 +18,8 @@
 .btn-secondary:hover:not(:disabled) { background-color: var(--color-background); }
 .btn-danger { background-color: var(--color-danger); color: white; }
 .btn-danger:hover:not(:disabled) { opacity: 0.9; }
+.btn-success { background-color: var(--color-success); color: white; }
+.btn-success:hover:not(:disabled) { opacity: 0.9; }
 .btn-logo { background: linear-gradient(135deg, #f59e0b, #d4af37); color: white; border: none; }
 .btn-logo:hover:not(:disabled) { background: linear-gradient(135deg, #f59e0b, #eab308); opacity: 0.9; }
 
